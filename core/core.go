@@ -24,8 +24,11 @@ func Start() error {
 	}
 
 	// Setting saving level
-	// There are 3 levels, 3 is the strongest in saving matter.
-	config.SetLevel(level)
+	// There are 4 levels, 4 is the strongest in saving matter.
+	err := config.SetLevel(level)
+	if err != nil {
+		return err
+	}
 	if salary == 0 {
 		return errors.ErrSalaryRequired
 	}
