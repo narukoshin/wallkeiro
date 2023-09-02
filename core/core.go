@@ -66,6 +66,10 @@ func command_parser() bool {
                 if err!= nil {
                     panic(err)
                 }
+				if (*name == "") {
+					fmt.Println("Error: Please specify the name of the expense you want to remove.")
+					return true
+				}
                 err = expenses.Remove(*name)
                 if err!= nil {
                     panic(err)
