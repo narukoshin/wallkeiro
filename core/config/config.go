@@ -12,13 +12,13 @@ func SetLevel(level int) error {
 	}
 	switch level {
 	case 1:
-		MinimalBalanceAfterExpenses = 150
+		MinimalBalanceAfterExpenses = 190
 	case 2:
-		MinimalBalanceAfterExpenses = 130
+		MinimalBalanceAfterExpenses = 170
 	case 3:
-		MinimalBalanceAfterExpenses = 110
+		MinimalBalanceAfterExpenses = 150
 	case 4:
-		MinimalBalanceAfterExpenses = 50
+		MinimalBalanceAfterExpenses = 100
 	}
 	return nil
 }
