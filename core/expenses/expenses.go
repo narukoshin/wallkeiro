@@ -97,13 +97,13 @@ func Total() (float64, error){
     return total, nil
 }
 
-func CalculateSavings(salary float64) (float64, error) {
+func CalculateSavings(salary float64) (float64, float64, error) {
 	expensesTotal, err := Total()
 	if err != nil {
-		return 0.0, err
+		return 0.0, 0.0, err
 	}
 	if expensesTotal > salary {
-		return 0.0, errors.ErrExpensesMoreThanSalary
+		return 0.0, 0.0, errors.ErrExpensesMoreThanSalary
 	}
 
 	bills := expensesTotal
@@ -113,9 +113,9 @@ func CalculateSavings(salary float64) (float64, error) {
 	withdrawnAmount := math.Max(5*math.Floor(remainingAmount/5), 0)
 
 	if withdrawnAmount <= 10 {
-		return 0.0, errors.ErrWithdrawnAmountTooLow
+		return 0.0, 0.0, errors.ErrWithdrawnAmountTooLow
 	}
-	return withdrawnAmount, nil
+	return withdrawnAmount, desiredFinalBalance, nil
 }
 
 func ShowExpenses() error {
