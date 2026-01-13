@@ -33,11 +33,11 @@ func Start() error {
 		return errors.ErrSalaryRequired
 	}
 	// Calculating the savings.
-	saving, err := expenses.CalculateSavings(salary)
+	saving, leftAmount, err := expenses.CalculateSavings(salary)
 	if err != nil {
 		return err	
 	}
-	fmt.Println(saving)
+	fmt.Printf("You can save %.2f € and your budget after all expenses for this month is %.2f €\n", saving, leftAmount)
 	return nil
 }
 
