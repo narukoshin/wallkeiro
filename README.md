@@ -1,2 +1,3 @@
 # wallkeiro
-An app that helps you to save the money monthly by calculating all your monthly expenses and the salary.
+
+Wallkeiro helps you battle your greatest enemy: reckless spending. Enter your income, summon your expenses, and watch Wallkeiro calculate the leftover power you can store for future quests.
