@@ -113,6 +113,7 @@ func Edit(ProfileData config.ProfileData) config.ProfileData {
 }
 
 func Calculate(ProfileData config.ProfileData) {
+	config.SetLevel(ProfileData.Config.SavingLevel)
 	salary := ProfileData.Config.Salary
 	expenses := ProfileData.Expenses
 
