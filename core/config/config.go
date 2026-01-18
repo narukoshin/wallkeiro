@@ -8,8 +8,6 @@ import (
 	"os"
 )
 
-const ExpensesFile string = "user/expenses.json"
-
 const ProfilesFolder string = "profiles"
 
 var MinimalBalanceAfterExpenses float64 = 150
@@ -208,6 +206,17 @@ func RenameProfile(oldName, newName string) error {
 	return err
 }
 
+// SetLevel sets the minimum balance after expenses that the application should
+// target. The level parameter determines the minimum balance after expenses
+// as follows:
+//
+// Level 1: 190
+// Level 2: 170
+// Level 3: 150
+// Level 4: 100
+//
+// If the level parameter is greater than 4, this function returns an error.
+// Otherwise, it returns nil.
 func SetLevel(level int) error {
 	if level > 4 {
 		return errors.ErrLevelTooHigh

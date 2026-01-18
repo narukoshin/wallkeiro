@@ -10,6 +10,8 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+// Show displays a table of the expenses in the given ProfileData. It takes no arguments other than the ProfileData, and prints a table with two columns: Name and Amount. 
+// The table is prefaced with a note that the user may browse the expenses at their convenience.
 func Show(ProfileData config.ProfileData) {
 	columns := []string{"Name", "Amount"}
 	note := "Note: This table displays various products and their prices for your convenience.\nFeel free to browse!"
@@ -112,6 +114,11 @@ func Edit(ProfileData config.ProfileData) config.ProfileData {
 	return ProfileData
 }
 
+// Calculate takes a ProfileData struct as an argument, and calculates the total expenses of the profile.
+// It then calculates the remaining amount after expenses and desired final balance.
+// If the remaining amount is more than 10, it suggests a withdraw amount of the remaining amount rounded up to the nearest 5.
+// If the remaining amount is less than or equal to 10, it prints an error.
+// The function also prints out the salary, total expenses, desired final balance, remaining amount after expenses and desired balance, and the suggested withdraw amount.
 func Calculate(ProfileData config.ProfileData) {
 	config.SetLevel(ProfileData.Config.SavingLevel)
 	salary := ProfileData.Config.Salary
@@ -138,6 +145,11 @@ func Calculate(ProfileData config.ProfileData) {
 	fmt.Printf("Suggested Withdrawn Amount: %.2f€\n", withdrawnAmount)
 }
 
+// printFlexibleTable prints a table to the console with the given note and columns.
+// The table is dynamically sized based on the contents of the rows.
+// The note is split into lines and centered in the table.
+// The columns are centered in the table with a minimum width of 20 characters.
+// The total of the rows is calculated and a total row is added to the table.
 func printFlexibleTable(note string, columns []string, rows []config.ExpensesStuct) {
 	// Find the maximum width for each column
 	colWidths := make([]int, len(columns))
