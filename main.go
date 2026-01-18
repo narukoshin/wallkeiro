@@ -4,6 +4,12 @@ import "wallkeiro/core"
 
 func main(){
 	var err error
+
+	err = core.CreateFolder()
+	if err != nil {
+		panic(err)
+	}
+
 	err = core.Start()
 	if err != nil {
 		panic(err)

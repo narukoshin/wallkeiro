@@ -1,2 +1,12 @@
-build/
-user/
+# Deny all
+*
+
+# Allow list
+!.gitignore
+!main.go
+!core/
+!core/**/*.go
+!go.mod
+!go.sum
+!LICENSE
+!README.md

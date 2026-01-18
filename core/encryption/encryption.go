@@ -54,8 +54,7 @@ func decrypt(data, priv string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	decrypted, err := rsa.DecryptOAEP(sha256.New(),
-	rand.Reader, key, data2, nil)
+	decrypted, err := rsa.DecryptOAEP(sha256.New(),rand.Reader, key, data2, nil)
 	if err != nil {
 		return "", err
 	}

@@ -1,135 +1,143 @@
 package expenses
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
-	"os"
 	"strings"
 	"wallkeiro/core/config"
 	"wallkeiro/core/errors"
+
+	"github.com/manifoldco/promptui"
 )
 
-// Monthly expenses
-type ExpensesStuct struct {
-	Name string `json:"name"`
-	Amount float64 `json:"amount"`
+func Show(ProfileData config.ProfileData) {
+	columns := []string{"Name", "Amount"}
+	note := "Note: This table displays various products and their prices for your convenience.\nFeel free to browse!"
+	printFlexibleTable(note, columns, ProfileData.Expenses)
 }
 
-func ReadExpenses() ([]ExpensesStuct, error) {
-	// Checking if the file exists
-	contents, err := os.ReadFile(config.ExpensesFile)
-	if err != nil {
-		return nil, err
-	}
-
-	var expenses []ExpensesStuct
-	json.Unmarshal(contents, &expenses)
-	return expenses, nil
-
+// Add a new expense to the given ProfileData. It takes the name of the expense
+// and its amount as arguments, appends the expense to the ProfileData's list
+// of expenses and returns the updated ProfileData.
+func Add(ProfileData config.ProfileData, name string, amount float64) config.ProfileData {
+	ProfileData.Expenses = append(ProfileData.Expenses, config.ExpensesStuct{Name: name, Amount: amount})
+	return ProfileData
 }
 
-func WriteExpenses (expenses []ExpensesStuct) error {
-	data, err := json.Marshal(expenses)	
-	if err != nil {
-		return err
+// Edit allows the user to edit an existing expense in the given ProfileData.
+// It presents a prompt to select the expense to edit, and then presents
+// a prompt to select the action to take: change name, change value, or delete expense.
+// After the user selects an action and provides any required information, the function
+// updates the ProfileData accordingly and returns the updated ProfileData.
+func Edit(ProfileData config.ProfileData) config.ProfileData {
+	var expenseNames []string
+	for _, expense := range ProfileData.Expenses {
+		expenseNames = append(expenseNames, expense.Name)
 	}
-	err = os.WriteFile(config.ExpensesFile, data, 0644)
-	if err != nil {
-		return err
+	prompt := promptui.Select{
+		Label: "Select Expense to Edit",
+		Items: expenseNames,
+		Searcher: func(input string, index int) bool {
+			expense := expenseNames[index]
+			name := strings.Replace(strings.ToLower(expense), " ", "", -1)
+			input = strings.Replace(strings.ToLower(input), " ", "", -1)
+			return strings.Contains(name, input)
+		},
 	}
-	return nil
+	_, expenseSelector, err := prompt.Run()
+	if err != nil {
+		panic(err)
+	}
+	var selectedExpense config.ExpensesStuct
+	for _, expense := range ProfileData.Expenses {
+		if expense.Name == expenseSelector {
+			selectedExpense = expense
+			break
+		}
+	}
+
+	// actions-change name, change value, delete
+	actionPrompt := promptui.Select{
+		Label: "Select Action",
+		Items: []string{"Change Name", "Change Amount", "Delete Expense"},
+	}
+	_, actionSelector, err := actionPrompt.Run()
+	if err != nil {
+		panic(err)
+	}
+	switch actionSelector {
+	case "Change Name":
+		namePrompt := promptui.Prompt{
+			Label: "Enter new name",
+			Default: selectedExpense.Name,
+		}
+		newName, err := namePrompt.Run()
+		if err != nil {
+			panic(err)
+		}
+		for i, expense := range ProfileData.Expenses {
+			if expense.Name == selectedExpense.Name {
+				ProfileData.Expenses[i].Name = newName
+				break
+			}
+		}
+	case "Change Amount":
+		amountPrompt := promptui.Prompt{
+			Label: "Enter new amount",
+			Default: fmt.Sprintf("$%.2f", selectedExpense.Amount),
+		}
+		newAmountStr, err := amountPrompt.Run()
+		if err != nil {
+			panic(err)
+		}
+		var newAmount float64
+		_, err = fmt.Sscanf(newAmountStr, "%f", &newAmount)
+		if err != nil {
+			panic(err)
+		}
+		for i, expense := range ProfileData.Expenses {
+			if expense.Name == selectedExpense.Name {
+				ProfileData.Expenses[i].Amount = newAmount
+				break
+			}
+		}
+	case "Delete Expense":
+		for i, expense := range ProfileData.Expenses {
+			if expense.Name == selectedExpense.Name {
+				ProfileData.Expenses = append(ProfileData.Expenses[:i], ProfileData.Expenses[i+1:]...)
+				break
+			}
+		}
+	}
+	return ProfileData
 }
 
-func Add(name string, amount float64) error {
-	expenses, err := ReadExpenses()
-	if err != nil {
-		return err
+func Calculate(ProfileData config.ProfileData) {
+	salary := ProfileData.Config.Salary
+	expenses := ProfileData.Expenses
+
+	totalExpenses := 0.0
+	for _, expense := range expenses {
+		totalExpenses += expense.Amount
 	}
-
-	e := ExpensesStuct {
-		Name: name,
-		Amount: amount,
+	if totalExpenses > salary {
+		fmt.Errorf(errors.ErrExpensesMoreThanSalary.Error())
 	}
-
-	expenses = append(expenses, e)
-
-	err = WriteExpenses(expenses)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func Remove(name string) error {
-	expenses, err := ReadExpenses()
-    if err!= nil {
-        return err
-    }
-
-    for i, e := range expenses {
-		if strings.Contains(strings.ToLower(e.Name), strings.ToLower(name)) {
-            expenses = append(expenses[:i], expenses[i+1:]...)
-            break
-        }
-	}
-
-    err = WriteExpenses(expenses)
-    if err!= nil {
-        return err
-    }
-
-    return nil
-}
-
-func Total() (float64, error){
-	expenses, err := ReadExpenses()
-    if err!= nil {
-        return 0, err
-    }
-
-    var total float64
-    for _, e := range expenses {
-        total += e.Amount
-    }
-
-    return total, nil
-}
-
-func CalculateSavings(salary float64) (float64, float64, error) {
-	expensesTotal, err := Total()
-	if err != nil {
-		return 0.0, 0.0, err
-	}
-	if expensesTotal > salary {
-		return 0.0, 0.0, errors.ErrExpensesMoreThanSalary
-	}
-
-	bills := expensesTotal
-	desiredFinalBalance := config.MinimalBalanceAfterExpenses 
-
+	bills := totalExpenses
+	desiredFinalBalance := config.MinimalBalanceAfterExpenses
 	remainingAmount := salary - bills - desiredFinalBalance
 	withdrawnAmount := math.Max(5*math.Floor(remainingAmount/5), 0)
-
 	if withdrawnAmount <= 10 {
-		return 0.0, 0.0, errors.ErrWithdrawnAmountTooLow
+		fmt.Errorf(errors.ErrWithdrawnAmountTooLow.Error())
 	}
-	return withdrawnAmount, desiredFinalBalance, nil
+	fmt.Printf("Salary: %.2f€\n", salary)
+	fmt.Printf("Total Expenses: %.2f€\n", totalExpenses)
+	fmt.Printf("Desired Final Balance: %.2f€\n", desiredFinalBalance)
+	fmt.Printf("Remaining Amount after Expenses and Desired Balance: %.2f€\n", remainingAmount)
+	fmt.Printf("Suggested Withdrawn Amount: %.2f€\n", withdrawnAmount)
 }
 
-func ShowExpenses() error {
-	expenses, err := ReadExpenses()
-    if err!= nil {
-        return err
-    }
-	columns := []string{"Name", "Price"}
-	note := "Note: This table displays various products and their prices for your convenience.\nFeel free to browse!"
-	printFlexibleTable(note, columns, expenses)
-	return nil
-}
-
-func printFlexibleTable(note string, columns []string, rows []ExpensesStuct) {
+func printFlexibleTable(note string, columns []string, rows []config.ExpensesStuct) {
 	// Find the maximum width for each column
 	colWidths := make([]int, len(columns))
 	for colIdx, colName := range columns {
@@ -141,7 +149,7 @@ func printFlexibleTable(note string, columns []string, rows []ExpensesStuct) {
 		if len(row.Name) > colWidths[0] {
 			colWidths[0] = len(row.Name)
 		}
-		
+
 		// Setting default column size
 		if colWidths[0] < 20 {
 			colWidths[0] = 20
